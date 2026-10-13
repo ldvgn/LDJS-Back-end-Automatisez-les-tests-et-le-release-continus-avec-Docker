@@ -1,0 +1,28 @@
+services:
+  mongo:
+    image: mongo:7
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${DB_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - 27017:27017
+    volumes:
+      - db:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build: .
+    ports:
+      - "8080:3000"
+    environment:
+      MONGO_URI: mongodb://${DB_USER}:${DB_PASSWORD}@mongo:27017/workshopsdb?authSource=admin
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+volumes:
+  db:
